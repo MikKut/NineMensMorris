@@ -9,11 +9,9 @@ namespace NineMensMorris.Models
         private static PeriodOfTheGame _gamePeriod;
         public static event EventHandler TurnIsChanged;
         public static event EventHandler PeriodIsChanged;
-        private const byte _turnWhenPeriodIsChanged = 17;
-        private const byte _looserQuantityOfChips = 2;
+        
         public static event EventHandler<GameStateEventArgs.TwoChipsIsLeftArgs> _twoChipsIsLeftEvent;
-        public const byte QuantityOfTheChipsForOneSide = 9;
-        public const byte QuantityOfTheButtons = 24;
+ 
         public static Dictionary<ButtonPosition, ChipState> ButtonStates;
         public static ushort MoveNumber { get; internal set; }
         public static EventHandler<GameStateEventArgs.TwoChipsIsLeftArgs> TwoChipsIsLeftEvent
@@ -48,6 +46,8 @@ namespace NineMensMorris.Models
                 TurnIsChanged?.Invoke(null, EventArgs.Empty);
             }
         }
+        public static byte QuantityOfChipsOfPlayer1 { get; internal set; } //TODO: implement scenario
+        public static byte QuantityOfChipsOfPlayer2 { get; internal set; }
         public static void IncrementMoveNumber() => MoveNumber++;
         public static void IncrementQuantityOfChipsOfPlayer2() => QuantityOfChipsOfPlayer2++;
         public static void DecrementQuantityOfChipsOfPlayer2() => QuantityOfChipsOfPlayer2--;
@@ -57,12 +57,10 @@ namespace NineMensMorris.Models
         {
             return TurnOfThePlayer == Models.Turn.Player1 ? Models.Turn.Player2 : Models.Turn.Player1;
         }
-        public static byte QuantityOfChipsOfPlayer1 { get; internal set; }
-        public static byte QuantityOfChipsOfPlayer2 { get; internal set; }
         static GameState()
         {
             MoveNumber = 0;
-            ButtonStates = new(QuantityOfTheButtons);
+            ButtonStates = new(GameLogic.GameInfo.QuantityOfTheButtons);
             for (ButtonPosition state = ButtonPosition.a1; state<=ButtonPosition.g1; state++)
             {
                 ButtonStates.Add(state, ChipState.None);
@@ -84,6 +82,38 @@ namespace NineMensMorris.Models
         }
         public static void GiveTheTurnToOponent()
         {
+            SwitchTurn();
+            ControlGamePeriod();
+            IncrementMoveNumber();
+        }
+        private static void ControlGamePeriod()
+        {
+            if (GamePeriod == Models.PeriodOfTheGame.SetUp)
+            {
+                if (MoveNumber == GameLogic.GameInfo.TurnWhenPeriodIsChanged)
+                {
+                    GamePeriod = Models.PeriodOfTheGame.HuntingTime;
+                }
+            }
+
+            else
+            {
+                if (QuantityOfChipsOfPlayer1 == GameLogic.GameInfo.LooserQuantityOfChips)
+                {
+                    TwoChipsIsLeftEvent?.Invoke(null, new GameStateEventArgs.TwoChipsIsLeftArgs(Turn.Player1));
+                }
+                else
+                {
+                    if (QuantityOfChipsOfPlayer2 == GameLogic.GameInfo.LooserQuantityOfChips)
+                    {
+                        TwoChipsIsLeftEvent?.Invoke(null, new GameStateEventArgs.TwoChipsIsLeftArgs(Turn.Player2));
+                    }
+
+                }
+            }
+        }
+        private static void SwitchTurn()
+        {
             if (TurnOfThePlayer == Turn.Player1)
             {
                 TurnOfThePlayer = Turn.Player2;
@@ -92,32 +122,7 @@ namespace NineMensMorris.Models
             {
                 TurnOfThePlayer = Turn.Player1;
             }
-            if (GamePeriod == Models.PeriodOfTheGame.SetUp)
-            {
-                if (MoveNumber == _turnWhenPeriodIsChanged)
-                {
-                    GamePeriod = Models.PeriodOfTheGame.HuntingTime;
-                }
-            }
-
-            else
-            {
-                if (QuantityOfChipsOfPlayer1 == _looserQuantityOfChips)
-                {
-                    TwoChipsIsLeftEvent?.Invoke(null, new GameStateEventArgs.TwoChipsIsLeftArgs(Turn.Player1));
-                }
-                else
-                {
-                    if (QuantityOfChipsOfPlayer2 == _looserQuantityOfChips)
-                    {
-                        TwoChipsIsLeftEvent?.Invoke(null, new GameStateEventArgs.TwoChipsIsLeftArgs(Turn.Player2));
-                    }
-
-                }
-            }
-            IncrementMoveNumber();
         }
-
         private static void CountQuantityOfPlayersChips()
         {
             foreach (var state in ButtonStates)

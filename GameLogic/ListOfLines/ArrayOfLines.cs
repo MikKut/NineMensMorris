@@ -12,7 +12,7 @@ namespace NineMensMorris.GameLogic
         public static readonly Dictionary<Models.ButtonPosition, Models.ButtonPosition[][]> MatchingLinesForTheButton;
         static CollectionOfLines()
         {
-            MatchingLinesForTheButton = new(Models.GameState.QuantityOfTheButtons);
+            MatchingLinesForTheButton = new(GameInfo.QuantityOfTheButtons);
             #region SetLines
             #region A
             MatchingLinesForTheButton[key: ButtonPosition.a1] = new ButtonPosition[2][]
